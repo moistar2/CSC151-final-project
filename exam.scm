@@ -4,7 +4,6 @@
 (define white-key (rectangle 20 100 "outline" "black"))
 (define black-key (rectangle 10 40 "solid" "black"))
 (define empty-key (rectangle 10 25 "solid" "white"))
-(define state (vector "red" "black-key"))
 
 (define white-keyboard
  (lambda (n)
