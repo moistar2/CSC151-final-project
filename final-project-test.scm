@@ -1,15 +1,44 @@
 (import music)
 (import js)
-; these are vectors used for testing
-(define piano-vec (make-vector 15 0))
+(import canvas)
 
-(define vec-set-piano-on
-    (lambda (vec-index)
+; these are vectors used for testing
+(define piano-vec (make-vector 88 0))
+
+(define piano2-vec (make-vector 88 0))
+
+(define vec-set-on
+    (lambda (vector-number vec-index)
         (vector-set! piano-vec vec-index 1)))
 
-(define vec-set-piano-off
-    (lambda (vec-index)
-        (vector-set! piano-vec vec-index 0)))
+
+(define vec-lookup-table
+    (lambda (x)
+        (match x
+            [1 piano-vec]
+            [2 piano2-vec])))
+
+(define vec-set-on
+    (lambda (inst-vec vec-index)
+        (vector-set! (vec-lookup-table inst-vec) 
+                        (match inst-vec
+                            [1 (- vec-index 21)]
+                            [2 (- vec-index 21)])
+                        1)))
+
+(define vec-set-off
+    (lambda (inst-vec vec-index)
+        (vector-set! (vec-lookup-table inst-vec) 
+                        (match inst-vec
+                            [1 (- vec-index 21)]
+                            [2 (- vec-index 21)])
+                            0)))
+
+(define instrument-note
+    (lambda (midi-val dur-val inst-vec)
+        (if (= midi-val 0)
+            (rest dur-val)
+            (mod (instrument inst-vec) (note midi-val dur-val)))))
 
 ; this is piano specific as of right now. In the future I would like a function to be able to look up a vecotr from a "table" of them where they are keyed convieniently
 ;;; (music-machine-helper info-list) -> composition?
@@ -20,10 +49,10 @@
         (let* ([midi-val (list-ref info-list 0)]
                [dur-val (list-ref info-list 1)]
                [instrument-vec (list-ref info-list 2)]
-               [set-on (lambda () (vec-set-piano-on (- midi-val 21)))]
-               [set-off (lambda () (vec-set-piano-off (- midi-val 21)))])
+               [set-on (lambda () (vec-set-on instrument-vec midi-val))]
+               [set-off (lambda () (vec-set-off instrument-vec midi-val))])
              (seq (trigger set-on)
-                  (note midi-val dur-val)
+                  (instrument-note midi-val dur-val instrument-vec)
                   (trigger set-off)))))
 
 ;;; (music-machine-voice note-list) -> composition?
@@ -43,8 +72,23 @@
         (apply par voice-list)))
 
 
-(map music-machine-helper (list (list 21 qn 1) (list 22 qn 1) (list 23 qn 1) (list 24 qn 1) (list 25 qn 1) (list 26 qn 1) (list 27 qn 1) (list 28 qn 1)))
-(apply seq (map music-machine-helper (list (list 21 qn 1) (list 22 qn 1) (list 23 qn 1) (list 24 qn 1) (list 25 qn 1) (list 26 qn 1) (list 27 qn 1) (list 28 qn 1))))
+(map music-machine-helper (list (list 21 qn 2) (list 22 qn 2) (list 23 qn 2) (list 24 qn 2) (list 25 qn 2) (list 26 qn 2) (list 27 qn 2) (list 28 qn 2)))
+(apply seq (map music-machine-helper (list (list 21 qn 2) (list 22 qn 2) (list 23 qn 2) (list 24 qn 2) (list 25 qn 2) (list 26 qn 2) (list 27 qn 2) (list 28 qn 2))))
 
 piano-vec
+
+(define canv (make-canvas 880 100))
+
+(animate-with
+  (lambda (time)
+    (begin
+      (draw-rectangle canv 0 0 880 100 "solid" "white")
+      (map
+        (lambda (x)
+            (if (equal? (vector-ref piano2-vec x) 1)
+                (draw-rectangle canv (* 10 x) 0 10 100 "solid" "purple")
+                (draw-rectangle canv (* 10 x) 0 10 100 "solid" "white")))
+        (range 88)))))
+
+canv
 
